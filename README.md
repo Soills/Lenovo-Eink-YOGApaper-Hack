@@ -41,7 +41,7 @@
 
 | SKU | 型号 Model | 市场 Market | 固件 Firmware | 状态 Status |
 |---|---|---|---|---|
-| YOGA Paper | SP101FU | 中国大陆 PRC | S001345（2024-12-16） | 逆向完成，未 root |
+| YOGA Paper | SP101FU | 中国大陆 PRC | S001345（2024-12-16） | 逆向完成，已有第三方项目完成，详见docs |
 | 启天 Smart Paper | SP523FC | 中国大陆/教育 CCN | S001014（2023-03-01） | ✅ **root 成功**（2026-08-25） |
 
 硬件 / Hardware：RK3566（四核 Cortex-A55）、4GB RAM / 64GB eMMC、10.3" 墨水屏、Android 11 · ZUI 13。同一块板 `Louvre_3566_4G`，两个市场 SKU，**固件不互通**。 / Same board `Louvre_3566_4G`, two market SKUs, **incompatible firmware**.
