@@ -148,7 +148,7 @@ SHA1(
 
 **EN:** Disassembly plus the Rockchip source (`common/image-android.c`) confirm uboot SHA1-hashes the whole boot image and compares it against the header `id` field, rejecting with `return -EBADFD` on mismatch. Kernel data starts after the header page; each data block uses the exact size-field value (not page-aligned) and its size is appended *after* the data. Any ramdisk edit requires recomputing the id — `compute_boot_id()` in `build_boot.py` does exactly this.
 
-### 3. 重打包铁律 / Repack rules（两个致命坑，`build_boot.py` 已解决）
+### 3. 重打包 / Repack rules（两个致命坑，`build_boot.py` 已解决）
 
 1. **必须保留结尾 second/DTB 区段**：原厂 boot 在 ramdisk 后有 ~321KB（`second_size=0x32000` + 2 个 DTB）。之前所有 repack（含旧的 original.img）都把它丢了，而头部仍声明它 → 设备按声明去读全零区 → 内核无设备树 → 显示初始化前挂死 → **黑屏、开机键无反应**。这是所有改版 boot 开不了机的第一层根因，与 Magisk 版本、payload、prop 改动全部无关。
 2. **必须重算 id**：保留区段后仍不开机 = uboot SHA1 校验失败（第二层根因），用上面的算法重算。
