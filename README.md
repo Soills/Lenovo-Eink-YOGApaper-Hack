@@ -2,7 +2,7 @@
 
 > 🌏 语言 / Language：**中文** ｜ [**English**](README.en.md)
 
-**食用方法**
+**快速食用方法**
 
 1. 克隆本项目到本地
 2. 设备关机，卡针顶住底部小孔，插 USB 进 **Loader / Maskrom** 模式（设备管理器出现 Rockusb）
@@ -20,7 +20,7 @@
 
 ---
 
-## 🎯 面向 RK 研究者的核心收获
+##  面向 RK 研究
 
 > 以下结论**不只适用于这两台联想墨水屏**——它们揭示的是 **Rockchip 安卓设备（RK3566/RK3399/RK3568/RK3588 等）的一整套共性机制**，全部基于固件 / uboot 源码级逆向，并已用原厂镜像精确验证，可直接迁移到其他 RK 设备，或用来理解/修复你自己的重打包工具。
 
@@ -35,7 +35,7 @@
 | uboot 读 BCB 在偏移 **0x0** | RK uboot（recovery 引导） | 不是 0x4000；0x4000 的 `--wipe_all` 残留会被无视 |
 | 消费版 vbmeta = `VERIFICATION_DISABLED` | RK 消费版固件 | flags=0x2，AVB 不拦改过的 boot；只锁了 fastboot unlock |
 | 国行 ROM 砍 adb 特性 | 大量国产 ROM | USB HAL 只认充电/MTP + init.rc 缺 adb TCP 触发器（见下） |
-| ZUI `isSupportDoubleList` 焊死开发者选项 | 联想 ZUI 全系 | `EinkUtils.isSupportDoubleList()` 硬编码 true，连点版本号被短路 |
+| ZUI `isSupportDoubleList` 开发者选项 | 联想 ZUI 全系 | `EinkUtils.isSupportDoubleList()` 硬编码 true，连点版本号无效|
 
 > **搜索关键词**：rockchip root / RK3566 root / RK boot 重打包 / rockchip boot repack / RK uboot image hash / ANDROID_BOOT_IMAGE_HASH / boot v2 dtb offset / RSCE resource container / 瑞芯微 刷机 / 墨水屏平板 root / Lenovo YOGA Paper SP101FU / 启天 Smart Paper SP523FC / ZUI isSupportDoubleList
 
@@ -48,7 +48,7 @@
 | YOGA Paper | SP101FU | 中国大陆 PRC | S001345（2024-12-16） | 逆向完成，已有第三方项目完成，详见 docs |
 | 启天 Smart Paper | SP523FC | 中国大陆/教育 CCN | S001014（2023-03-01） | ✅ **root 成功**（2026-08-25） |
 
-硬件：RK3566（四核 Cortex-A55）、4GB RAM / 64GB eMMC、10.3" 墨水屏、Android 11 · ZUI 13。同一块板 `Louvre_3566_4G`，两个市场 SKU，**固件不互通**。
+硬件：RK3566（四核 Cortex-A55）、4GB RAM / 64GB eMMC、10.3" 墨水屏、Android 11 · ZUI 13。同一块板 `Louvre_3566_4G`，两个市场 SKU。
 
 ---
 
@@ -180,10 +180,9 @@ settings put global development_settings_enabled 1
 
 ### 5. adb / USB 链路
 
-- 国行 USB HAL **只认充电/MTP**：`persist.sys.usb.config=adb` 不生效 → USB adb 从物理层面不可用
+- 国行 USB HAL **只认充电/MTP**：`persist.sys.usb.config=adb` 不生效
 - 系统 init.rc **缺 `on property:persist.adb.tcp.port=* → start adbd` 触发器**：光设端口不会拉起 adbd
-- boot 层解法（prop.default）：`persist.sys.usb.config=adb` + **`sys.usb.config=adb`**（首阶段启动即拉起 adbd + adb gadget，绕开框架层的 MTP 偏好）+ `persist.adb.tcp.port=5555`（兜底）。**注意**：persist 属性存在 /data/property，改过要清一次 /data，否则旧的 `none` 会赢
-- 兜底：All-in-One 模块开机以 root 强制 setprop；WiFi adb `adb connect 设备IP:5555`
+- All-in-One 模块开机以 root 强制 setprop；WiFi adb `adb connect 设备IP:5555`
 
 ### 6. recovery-in-boot、BCB、vbmeta、分区读保护
 
