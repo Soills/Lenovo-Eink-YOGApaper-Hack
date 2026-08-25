@@ -1,0 +1,31 @@
+# ===== 固件整包（>2GB，GitHub 单文件上限 100MB，放不下）=====
+*.7z
+*.rar
+*.sparse
+
+# ===== 第三方工具二进制 =====
+upgrade_tool.exe
+adb.exe
+AdbWinApi.dll
+AdbWinUsbApi.dll
+
+# ===== 第三方 APK / 驱动 / loader =====
+files/
+*.apk
+*.bin
+
+# ===== 临时文件夹 / 临时脚本（_ 开头）=====
+_*/
+_*.py
+_uipull/
+
+# ===== HelperApp 构建产物 / 签名密钥（源码保留）=====
+模块/HelperApp/build/
+模块/HelperApp/keystore/
+
+# ===== 临时文件 =====
+*.tmp
+*.log
+*.txt
+Thumbs.db
+Desktop.ini
