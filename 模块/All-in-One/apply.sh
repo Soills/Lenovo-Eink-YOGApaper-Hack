@@ -50,6 +50,9 @@ if [ "$INSTALL" = "1" ]; then
   settings put global package_verifier_enable 0
   settings put global verifier_verify_adb_installs 0
   settings put global verifier_disable_adb_installs 1
+  # 关键：ZUI PackageInstaller 拿自己的包名查 canRequestPackageInstalls（不是调用方），
+  # 不授这个 appop 则任何应用发起安装都被拦"系统已禁止安装该软件包"
+  appops set com.android.packageinstaller REQUEST_INSTALL_PACKAGES allow 2>/dev/null
   for pkg in $(pm list packages 2>/dev/null | sed 's/package://'); do
     appops set "$pkg" REQUEST_INSTALL_PACKAGES allow 2>/dev/null
   done
