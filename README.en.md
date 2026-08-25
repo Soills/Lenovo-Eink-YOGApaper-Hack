@@ -63,7 +63,7 @@ build_boot.py             core RE tool: boot layout parse / cpio inject / preser
 flash_boot.sh             bash equivalent (Git Bash), ~10 min device-wait loop with log
 upgrade_tool.exe          Rockchip official command-line flash tool
 adb.exe + DLL             bundled adb environment
-img/                      firmware images (not in repo)
+img/                      firmware images → in [Release boot-images-v1](https://github.com/Soills/Lenovo-Eink-YOGApaper-Hack/releases/tag/boot-images-v1) (GitHub 100MB/file limit; hosted as release assets)
 files/                    drivers / Magisk APK / MiniLoaderAll.bin (not in repo)
 模块/All-in-One.zip       all-in-one Magisk module (developer options + adb + install unlock + wallpaper)
 ```
