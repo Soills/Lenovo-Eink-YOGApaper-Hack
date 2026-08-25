@@ -64,7 +64,7 @@ build_boot.py             核心逆向工具：解析 boot 布局 / cpio 注入 
 flash_boot.sh             bash 版刷 boot 脚本（Git Bash 用）
 upgrade_tool.exe          瑞芯微官方命令行烧录工具
 adb.exe + DLL             自带 adb 环境
-img/                      固件镜像（不入库）
+img/                      固件镜像 → 在 [Release boot-images-v1](https://github.com/Soills/Lenovo-Eink-YOGApaper-Hack/releases/tag/boot-images-v1)（GitHub 单文件限 100MB，走 Release 附件）
 files/                    驱动 / Magisk APK / MiniLoaderAll.bin（不入库）
 模块/All-in-One.zip       整合模块 v2.1（开发者选项/adb/解除安装限制/显示档位/壁纸档位 + Helper App + Amaze 文件管理器；源码在 模块/HelperApp/）
 ```
