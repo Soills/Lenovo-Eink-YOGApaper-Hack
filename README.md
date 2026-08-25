@@ -59,8 +59,8 @@ build_boot.py             核心逆向工具：解析 boot 布局 / cpio 注入 
 flash_boot.sh             bash 版刷 boot 脚本（Git Bash 用）
 upgrade_tool.exe          瑞芯微官方命令行烧录工具
 adb.exe + DLL             自带 adb 环境
-img/                      固件镜像（.gitignore，不入库）
-files/                    驱动 / Magisk APK / MiniLoaderAll.bin（不入库）
+img/                      固件镜像
+files/                    驱动 / Magisk APK / MiniLoaderAll.bin
 模块/All-in-One.zip       整合 Magisk 模块（开发者选项 + adb + 解除安装限制 + 壁纸替换）
 paper（壁纸）/            壁纸替换模块
 ```
