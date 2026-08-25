@@ -1,0 +1,10 @@
+# SP523FC All-in-One 默认档位配置（全开，等同旧版行为）
+# 由 SP523FC Helper App 修改后此默认值不再生效（App 配置优先）
+DEV_OPTIONS=1
+ADB=1
+INSTALL=1
+COMMON=1
+INVERT=0
+BRIGHT=0
+FONT=1.0
+WALLPAPER=1
