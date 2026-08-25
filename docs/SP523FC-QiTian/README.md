@@ -109,14 +109,16 @@ magiskboot cpio ramdisk.cpio \
 
 **可行路线：root（Magisk）→ 刷 All-in-One 模块 → 开机自动解锁开发者选项/解除安装限制/adb。**
 
-解锁由 `模块\All-in-One.zip` 的 service.sh 开机以 root 执行（等效 setup_devmode 的命令，但不用手动跑）：
+解锁由 `模块\All-in-One.zip`（v2.0）的 service.sh 开机以 root 执行（等效 setup_devmode 的命令，但不用手动跑）：
 
 ```
 pm enable 'com.android.settings/com.android.settings.Settings$DevelopmentSettingsDashboardActivity'
 settings put global development_settings_enabled 1
 ```
 
-该模块还顺带：`settings put global adb_enabled 1` + `persist.sys.usb.config=adb`（USB adb）、解除安装限制（未知来源 + 全应用 `REQUEST_INSTALL_PACKAGES` 授权）、壁纸替换。带设置界面 App（SP523FC Helper）可开关各功能。开发者选项入口只看 `development_settings_enabled` 标志，不受 isSupportDoubleList 限制。
+> **真机修正（2026-08-25 实测）：开发者选项入口在 ZUI 设置里是彻底隐藏的**——连点版本号 8 次毫无反应（`isSupportDoubleList()` 硬编码短路 `handlePreferenceTreeClick`），且 `android.settings.APPLICATION_DEVELOPMENT_SETTINGS` intent 当前解析到 `DevelopmentSettingsDisabledActivity` 占位页。设置 flag 后入口也不会出现在列表里。**可行路径：模块开机 `pm enable` 启用真 Activity 后，用 Helper App 的「打开开发者选项」按钮（发同一个 intent）直达。**
+
+该模块 v2.0 还顺带：`settings put global adb_enabled 1` + `persist.sys.usb.config=adb`（USB adb）、解除安装限制（未知来源 + 全应用 `REQUEST_INSTALL_PACKAGES` 授权）、显示档位（亮度 10 级/深色反色/字体）、壁纸档位（001-005 深浅档）。设置 App（SP523FC Helper）可开关各功能档位，另有「打开开发者选项」「root 安装 APK」快捷入口。
 
 > 旧 boot（`magisk_adb_fixed`）里那些 devmode/zz_adb.rc 是无效改动，已去掉；setup_devmode.cmd 已删除，被 All-in-One 模块取代。
 
@@ -158,7 +160,7 @@ isSupportDoubleList 还把 App 信息、蓝牙、锁屏等一大堆设置项锁�
 | `files/magisk_v28.1.apk` | Magisk 28.1 管理器 | 直接安装 |
 | `files/MiniLoaderAll.bin` | Maskrom 模式恢复 loader | 救砖 |
 | `files/DriverAssitant_v5.12.zip` / `vivo9008drivers.exe` | 瑞芯微 / ADB 驱动 | 装驱动 |
-| `模块/All-in-One.zip` | 整合模块：壁纸+开发者选项+adb+解除安装限制 | Magisk 里刷 |
+| `模块/All-in-One.zip` | 整合模块 v2.1：开发者选项/adb/解除安装限制/显示档位/壁纸档位 + Helper App + **Amaze 文件管理器**（可装 APK） | Magisk 里刷 |
 
 ⚠️ 重打包必须：①保留结尾 second/DTB 区段 ②用正确算法重算 id 写入头部。重建用 `img/build_boot.py`（内置 `compute_boot_id()`，自动处理这两点）。
 
@@ -204,9 +206,9 @@ adb install files\magisk_v28.1.apk
 
 **⑥ 刷整合模块**
 - Magisk → 模块 → 从本地安装 → `模块/All-in-One.zip` → 重启
-- 功能：开发者选项 / adb(USB+WiFi) / 解除安装限制 / 壁纸替换，桌面出现 SP523FC Helper 可开关
+- 功能：开发者选项(入口经 Helper 直达) / adb(USB+WiFi) / 解除安装限制 / 显示档位 / 壁纸档位，桌面出现 SP523FC Helper 可开关
 
-**⑦ 完成，装应用**（解除安装限制后，APK 复制进设备 → 文件管理器直接点装）
+**⑦ 完成，装应用**（用模块自带的 **Amaze 文件管理器**，它有安装权限）
 - 桌面启动器：`files/E-Ink-Launcher（桌面启动器）.apk`
 - 阅读器：`files/koreader-android-arm64-v2024.11.apk`
 
@@ -217,9 +219,9 @@ adb install files\magisk_v28.1.apk
 **1. Magisk 管理器**：`files/magisk_v28.1.apk` ——
 - 已连 adb：`adb install files\magisk_v28.1.apk`
 - 若提示"应用未安装/签名冲突"（设备上有 boot 里装的 stub，签名不同）：先 `adb uninstall com.topjohnwu.magisk` 再装
-- 若 adb 不通：装好 All-in-One 模块后，文件管理器直接点 APK 安装（模块已解除安装限制 + 给了文件管理器安装权限）
+- 若 adb 不通：装好 All-in-One 模块后，用 **Amaze 文件管理器**（模块自带，已授权安装权限）点 APK 直接装，或 Helper App 的「扫描 /sdcard APK 并用 root 安装」（**本机自带文件管理器没有 REQUEST_INSTALL_PACKAGES 权限，无法直接装 APK**，见下方实测发现）
 
-**2. All-in-One 模块**：`模块/All-in-One.zip` —— Magisk → 模块 → 从本地安装 → 选它 → 重启。功能：壁纸替换 / 开发者选项 / adb / 解除安装限制，桌面出现 "SP523FC Helper" App 可勾选开关。
+**2. All-in-One 模块**：`模块/All-in-One.zip` —— Magisk → 模块 → 从本地安装 → 选它 → 重启。功能：开发者选项（Helper 直达入口）/ adb / 解除安装限制 / 显示档位（亮度 10 级+反色+字体）/ 壁纸档位（001-005），桌面出现 "SP523FC Helper" App 可勾选开关。
 
 **3. 装其他应用**：模块解除安装限制后，APK 复制到设备 → 文件管理器点击即可安装（不用再改名）。装系统应用白名单外的包名也能装。需要 root 的：装 Termux 之类的终端 App，`su` 即 root shell。
 
@@ -232,6 +234,38 @@ adb shell su -c 'dd if=/dev/block/by-name/super of=/sdcard/super.img bs=4096'
 ```
 
 root 是绕过分区锁做备份最省事的办法。
+
+## 真机实测发现（2026-08-25，adb 排查）
+
+### 1. 为什么"系统已禁止安装该软件包"——文件管理器根本没有安装权限
+
+从文件管理器装 APK 永远被拦，消息来自 ZUI 定制 PackageInstaller（`TC421_PackageInstaller.apk`）。根因：**`com.lenovo.louvre.filemanager` 的 manifest 里没有声明 `REQUEST_INSTALL_PACKAGES` 权限**（`appops get` 显示 "No operations"），PackageInstaller 的未知来源检查对未声明该权限的调用方直接拦截。而 `com.lenovo.louvre.appstore`（应用中心）声明且 `granted=true`。
+
+- 这不是"未知来源开关"能解决的——appops 循环也救不了没声明权限的应用
+- **已解决（2026-08-25）**：模块自带 **Amaze File Manager**（`com.amaze.filemanager`，开源，声明并授予了 `REQUEST_INSTALL_PACKAGES` + `MANAGE_EXTERNAL_STORAGE`），开机由 apply.sh root 强制安装并授权；另可随时用 `adb install` 或 Helper 的「root 安装 APK」
+
+### 2. 开发者选项在设置里彻底隐藏（isSupportDoubleList 实测坐实）
+
+- 连点"版本号"8 次无任何反应（`BuildNumberPreferenceController` 第一行被 `isSupportDoubleList()` 短路）
+- `settings put secure/global development_settings_enabled 1` 后入口**依然不出现**
+- `android.settings.APPLICATION_DEVELOPMENT_SETTINGS` intent 解析到 `DevelopmentSettingsDisabledActivity` 占位页（真 Activity 在 manifest 里 `enabled=false`，且 `pm enable` 需要 root，shell 无权）
+- **可行方案**：模块开机以 root `pm enable` 真 Activity → Helper App「打开开发者选项」发同一 intent 直达
+
+### 3. 亮度/色温的真实机制（RockchipLights HAL）
+
+`logcat` 抓到的 HAL 日志（`vendor.light-rockchip`，前置灯为冷/暖双通道）：
+
+```
+setFL: brightness=9902, bright=48/48, ctemperature=3/2
+setFL: brightness=9902, bright=48 warm=140, cold=214
+```
+
+- **亮度滑块 → `screen_brightness`（0-255）→ HAL `bright` 字段**；滑块是连续无级的（实测 0/44/105/169/242/253），不是固定几档
+- **色温滑块 → HAL `warm/cold` 分光**（无 settings 键，Helper 无法直接控制，只能拖状态栏滑块）
+- **前置灯有慢速平滑过渡**（`SmoothWarmingUp`/`SLOW_COLD_START_TIME`）：改亮度是渐变不是瞬变；亮度设很低会熄灯，重新点亮要等慢启动，`settings put` 直写偶尔会卡在过渡中途（如只到 bright=14）——UI 滑块路径最可靠
+- 亮度写 `settings put system screen_brightness <0-255>` + `screen_brightness_mode 0` 在框架层生效（`mBrightnessState` 精确跟随）
+
+
 
 ## 和 SP101FU 的关系
 
