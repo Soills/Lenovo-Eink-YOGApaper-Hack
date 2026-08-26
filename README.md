@@ -7,7 +7,7 @@
 1. 克隆本项目到本地
 2. 设备关机，卡针顶住底部小孔，插 USB 进 **Loader / Maskrom** 模式（设备管理器出现 Rockusb）
 3. 双击 `一键流程.cmd` → `[1]` 刷 root boot（`img/boot_SP523FC_S001014_magisk_root_adbmtp.img`，已实测可开机）；`[2]` 刷回原版 / `[3]` 整包刷机救砖
-4. 开机插 USB（boot 默认 adb）：`adb install files\magisk_v28.1.apk` 装 Magisk 管理器（提示签名冲突先 `adb uninstall com.topjohnwu.magisk`）
+4. 开机插 USB（boot 默认 adb）：`adb install files\magisk_v28.1.apk` 装 Magisk 管理器（提示重启后再安装一次Magisk 管理器）
 5. Magisk → 模块 → 从本地安装 → `模块\All-in-One.zip` → 重启 → 开发者选项 / 解除安装限制 / adb 全开
 
 ---
