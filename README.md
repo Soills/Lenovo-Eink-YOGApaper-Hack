@@ -46,7 +46,7 @@
 | SKU | 型号 | 市场 | 固件 | 状态 |
 |---|---|---|---|---|
 | YOGA Paper | SP101FU | 中国大陆 PRC | S001345（2024-12-16） | 逆向完成，已有第三方项目完成，详见 docs |
-| 启天 Smart Paper | SP523FC | 中国大陆/教育 CCN | S001014（2023-03-01） | ✅ **root 成功**（2026-08-25） |
+| 启天 Smart Paper | SP523FC | 中国大陆/教育 CCN | S001014（2023-03-01） | **root 成功**（2026-08-25） |
 
 硬件：RK3566（四核 Cortex-A55）、4GB RAM / 64GB eMMC、10.3" 墨水屏、Android 11 · ZUI 13。同一块板 `Louvre_3566_4G`，两个市场 SKU。
 
@@ -132,7 +132,7 @@ upgrade_tool uf update_nowaveform.img       # 整包刷机（救砖）
 
 ### 2. uboot SHA1 校验 boot id
 
-反汇编 uboot + 对照 Rockchip 源码（`common/image-android.c`，字符串 `"Hash from header"` / `"Hash real"` / `"ANDROID: Hash OK"`）确认：**uboot 对 boot 镜像整体做 SHA1，与头部 `id` 字段比对，不匹配直接拒启（`return -EBADFD`）。** 算法（已用原厂 id `7a4eb86d...` 精确验证）：
+反汇编 uboot + 对照 Rockchip 源码（`common/image-android.c`，字符串 `"Hash from header"` / `"Hash real"` / `"ANDROID: Hash OK"`）确认：**uboot 对 boot 镜像整体做 SHA1，与头部 `id` 字段比对，不匹配直接拒启（`return -EBADFD`）。** 算法（已用原厂 id `7a4eb86d...` 验证）：
 
 ```
 SHA1(
@@ -147,37 +147,31 @@ SHA1(
 - kernel 跳过头部页（`pgsz=2048`）；各数据块取**精确 size 字段值**（不对齐）；size 字段在数据**之后**追加
 - 校验失败 uboot 打印三段哈希并 `return -EBADFD` 拒启
 - **改了 ramdisk 必须用此算法重算 id 写回 0x240**，否则旧 id 对不上新内容 → 不开机
-- `build_boot.py` 的 `compute_boot_id()` 内置该算法，自动处理
+- `build_boot.py` 的 `compute_boot_id()` 内置该算法
 
-### 3. 重打包规则（两个致命坑，`build_boot.py` 已解决）
+### 3. 重打包
 
 1. **必须保留结尾 second/DTB 区段**：原厂 boot 在 ramdisk 后有 ~321KB（`second_size=0x32000` + 2 个 DTB）。之前所有 repack（含旧的 original.img）都把它丢了，而头部仍声明它 → 设备按声明去读全零区 → 内核无设备树 → 显示初始化前挂死 → **黑屏、开机键无反应**。这是所有改版 boot 开不了机的第一层根因，与 Magisk 版本、payload、prop 改动全部无关。
 2. **必须重算 id**：保留区段后仍不开机 = uboot SHA1 校验失败（第二层根因），用上面的算法重算。
 
 `build_boot.py` 的正确做法：以完整原厂 boot 为基底 → 只替换 ramdisk（cpio 注入 Magisk，或只改 prop.default）→ 结尾 second+DTB 区段**逐字节保留**并整体挪到新 ramdisk 末尾页对齐处 → 头部只改 `ramdisk_size` → 重算 `id` 写回。gzip 用与出厂一致的头（`FLG=0 MTIME=0 XFL=0 OS=3`）。Magisk payload 取自社区已验证可开机的 SP101FU 包（V3zOF），`.backup/.magisk` 的 SHA1 按本机真 stock 重新生成。
 
-三种模式：
 
-```
-python build_boot.py magisk    # → boot_SP523FC_S001014_magisk_root_adbmtp.img（Magisk root + adb）
-python build_boot.py noadb     # → boot_SP523FC_S001014_adbmtp_nomagisk.img（只开 adb，诊断用）
-python build_boot.py noop      # → boot_SP523FC_S001014_noop.img（内容不变只重压缩，隔离"重压缩是否影响启动"）
-```
 
 ### 4. ZUI 开发者选项焊死
 
-- 连点版本号没反应：`com.eink.settings.EinkUtils.isSupportDoubleList()` 硬编码 `return true`，而 `BuildNumberPreferenceController.handlePreferenceTreeClick()` 第一行就是 `if (isSupportDoubleList() || ...) return false;` —— 连点逻辑被代码短路，点多少次都不会动
+- 连点版本号没反应：`com.eink.settings.EinkUtils.isSupportDoubleList()` 硬编码 `return true`，而 `BuildNumberPreferenceController.handlePreferenceTreeClick()` 第一行就是 `if (isSupportDoubleList() || ...) return false;` —— 连点逻辑被代码短路
 - 搜索不到：开发者选项页的搜索索引被 `DevelopmentSettingsEnabler.isDevelopmentSettingsEnabled()` 挡住
 - Activity 在 manifest 里 `android:enabled="false"`，另有 `DevelopmentSettingsDisabledActivity` 占位，`am start` 也打不开
 - **Android 11 system-as-root 下 boot 无法改 Settings 数据库**：recovery-in-boot 的 ramdisk 没有根级 `init.rc`，正常启动只加载 system 分区里的 `/system/etc/init/*.rc`；放 ramdisk 的 `system/etc/init/zz_adb.rc` 会被挂载的 system 覆盖，recovery 专用 rc（`init.recovery.rk30board.rc`）正常启动根本不加载
-- → 唯一可行路线：**root（Magisk）→ 刷模块 → 开机以 root 解锁**。模块实际执行（等效手动命令）：
+- → 唯一可行路线：**root（Magisk）→ 刷模块 → 开机以 root 解锁**。模块实际执行：
 
 ```
 pm enable 'com.android.settings/com.android.settings.Settings$DevelopmentSettingsDashboardActivity'
 settings put global development_settings_enabled 1
 ```
 
-> ⚠️ **SP523FC（S001014）特例（2026-08-25 复核）**：原厂 Settings 里 `isSupportDoubleList()` **本来就是返回 false**，开发者选项 Activity 也没被禁用——和 SP101FU（S001345）不一样。因此 SP523FC **不需要改 Settings APK**，只需设置 `development_settings_enabled=1`（模块已做）。详见 [docs/SP523FC-QiTian/README.md](docs/SP523FC-QiTian/README.md)。
+原厂 Settings 里 `isSupportDoubleList()` **返回 false**，开发者选项 Activity 也没被禁用——和 SP101FU（S001345）不一样。因此 SP523FC **不需要改 Settings APK**，只需设置 `development_settings_enabled=1`（模块已做）。详见 [docs/SP523FC-QiTian/README.md](docs/SP523FC-QiTian/README.md)。
 
 ### 5. adb / USB 链路
 
@@ -199,6 +193,7 @@ settings put global development_settings_enabled 1
 ### 7. RK 出厂 UserMode 后门
 
 出厂测试应用 `DeviceTest.apk` 引用 RK 售后通道：`su --set-user-mode <n> --passwd rockchip`（mode1=开 adb，mode2=超级用户/root），默认口令 `rockchip`。**但消费版固件里没有 su 二进制**，这条通道在本机走不通；折腾 RK 工程固件/测试固件时可以留意。
+工程机也许可以直接开adb和root
 
 ---
 
@@ -206,7 +201,7 @@ settings put global development_settings_enabled 1
 
 | 工具 | 说明 |
 |---|---|
-| `build_boot.py` | 核心逆向工具：解析 boot 布局、cpio 注入 Magisk、保留 second/DTB 区段、重算 SHA1 id（Python 3，仅标准库，无第三方依赖） |
+| `build_boot.py` | 核心逆向工具：解析 boot 布局、cpio 注入 Magisk、保留 second/DTB 区段、重算 SHA1 id |
 | `一键流程.cmd` | SP523FC 刷机菜单：刷 root boot / 回原版 / 整包救砖 / 说明（GBK 编码，Windows 双击运行） |
 | `flash_boot.sh` | 等价 bash 版（Git Bash），带设备等待循环（最长 ~10 分钟）和日志 |
 | `upgrade_tool.exe` | 瑞芯微官方命令行烧录工具（LD / PL / WL / RD / DB / RCI / uf） |
@@ -220,7 +215,7 @@ LBA 分区表（SP523FC）：`boot_a=0x14000`、`boot_b=0x46000`、`super=0x2008
 
 - 仓库不含固件镜像和第三方工具二进制（见 `.gitignore`），只有文档、脚本和逆向结论
 - 刷机有风险，数据会清空，砖了自己负责
-- ⚠️ **重打包 boot 必须保留结尾 second/DTB 区段** + **重算 id**（详见"逆向专题"）
+-  **重打包 boot 必须保留结尾 second/DTB 区段** + **重算 id**（详见"逆向专题"）
 - 固件与设备不匹配会开机自检失败，boot 必须和系统同版本配套
 - 文档：中文 `docs/*/README.md`，英文 `docs/*/README.en.md`
 
