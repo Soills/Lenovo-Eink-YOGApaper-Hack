@@ -1,6 +1,6 @@
 id=sp523fc_allinone
 name=SP523FC All-in-One
-version=2.0
-versionCode=4
+version=2.3
+versionCode=7
 author=local
-description=开机按档位自动设置: 开发者选项/ADB/解除安装限制/亮度/字体/壁纸; 附带 Helper App(快捷入口/root安装APK/多档位开关)
+description=开机按档位自动设置: 开发者选项/ADB/解除安装限制/亮度/字体/壁纸; 附带 Helper App + Amaze 文件管理器(可装APK); 整合 PackageInstaller 解锁(白名单+未知来源两道门槛, systemless 覆盖, 一次重启生效)

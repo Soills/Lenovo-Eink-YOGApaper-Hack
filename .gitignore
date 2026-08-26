@@ -19,6 +19,12 @@ _*/
 _*.py
 _uipull/
 
+# ===== PackageInstaller 解锁工具链（_pi/ 解除忽略；中间产物与 APK 仍忽略）=====
+!_pi/
+_pi/decompiled/
+_pi/apktool_out/
+_pi/apktool_full/
+
 # ===== HelperApp 构建产物 / 签名密钥（源码保留）=====
 模块/HelperApp/build/
 模块/HelperApp/keystore/
