@@ -12,7 +12,7 @@
 
 ---
 
-两台联想墨水屏平板的逆向和刷机全记录：**YOGA Paper（SP101FU）** 与 **启天 Smart Paper（SP523FC）**。两者是同一块硬件板 **Louvre_3566_4G**（RK3566 / 4GB / 64GB / Android 11 · ZUI）的两个市场版本，但**固件不互通**：boot 携带型号/地区标识（SP523FC=CCN / SP101FU=PRC），系统开机自检比对 + uboot 对 boot 做 SHA1 校验，跨刷必拒启。
+两台联想墨水屏平板的逆向和刷机全记录：**YOGA Paper（SP101FU）** 与 **启天 Smart Paper（SP523FC）**。两者是同一块硬件板 **Louvre_3566_4G**（RK3566 / 4GB / 64GB / Android 11 · ZUI）的两个市场版本，但**固件不互通**：boot 携带型号/地区标识（SP523FC=CCN / SP101FU=PRC），系统开机自检比对 + uboot 对 boot 做 SHA1 校验，跨刷必拒启动。
 
 仓库内容：源码级逆向的 boot 链全分析（Android boot v2 布局、Rockchip uboot 的 SHA1 boot-id 校验 `common/image-android.c`、**重打包丢 second/DTB 区段必黑屏**）、loader 分区读保护、RK 出厂 UserMode 后门、ZUI 焊死的开发者选项、Magisk root 注入、默认开 adb 的完整解法，以及配套自动化脚本——`build_boot.py` 已把全部逆向结论编码进去，一键重打包 + 重算 id。
 
@@ -22,7 +22,7 @@
 
 ##  面向 RK 研究
 
-> 以下结论**不只适用于这两台联想墨水屏**——它们揭示的是 **Rockchip 安卓设备（RK3566/RK3399/RK3568/RK3588 等）的一整套共性机制**，全部基于固件 / uboot 源码级逆向，并已用原厂镜像精确验证，可直接迁移到其他 RK 设备，或用来理解/修复你自己的重打包工具。
+>  **Rockchip 安卓设备（RK3566/RK3399/RK3568/RK3588 等）的一整套共性机制**，全部基于固件 / uboot 逆向，并已用原厂镜像验证，可直接迁移到其他 RK 设备，或用来理解/修复你自己的重打包工具。
 
 | 机制 | 适用范围 | 关键点 |
 |---|---|---|
@@ -158,7 +158,7 @@ SHA1(
 
 
 
-### 4. ZUI 开发者选项焊死
+### 4. ZUI 开发者选项
 
 - 连点版本号没反应：`com.eink.settings.EinkUtils.isSupportDoubleList()` 硬编码 `return true`，而 `BuildNumberPreferenceController.handlePreferenceTreeClick()` 第一行就是 `if (isSupportDoubleList() || ...) return false;` —— 连点逻辑被代码短路
 - 搜索不到：开发者选项页的搜索索引被 `DevelopmentSettingsEnabler.isDevelopmentSettingsEnabled()` 挡住
@@ -190,7 +190,7 @@ settings put global development_settings_enabled 1
   adb shell su -c 'dd if=/dev/block/by-name/super of=/sdcard/super.img bs=4096'
   ```
 
-### 7. RK 出厂 UserMode 后门
+### 7. RK 出厂 UserMode
 
 出厂测试应用 `DeviceTest.apk` 引用 RK 售后通道：`su --set-user-mode <n> --passwd rockchip`（mode1=开 adb，mode2=超级用户/root），默认口令 `rockchip`。**但消费版固件里没有 su 二进制**，这条通道在本机走不通；折腾 RK 工程固件/测试固件时可以留意。
 工程机也许可以直接开adb和root
